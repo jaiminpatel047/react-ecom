@@ -1,4 +1,4 @@
-ome common features of a client site React project include:
+features of a client site React project include:
 
 1. A modern and responsive design that reflects the client's brand and style
 2. Customizable components and widgets that can be easily added, removed, or modified
