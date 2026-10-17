@@ -7,15 +7,23 @@ const CategoryPage = () => {
     const [cateGory, setCateGory] = useState([])
 
      useEffect(()=>{
+        const controller = new AbortController() // AI Refactor Patch: add AbortController to safely cancel fetch on unmount and prevent memory leaks
         const fetchCategories = async() => {
-            const response = await fetch(`https://fakestoreapi.com/products/category/${category}`)
-            const date = await response.json()
-            console.log(date)
-            setCateGory(date)
+            try {
+                const encodedCategory = encodeURIComponent(category) // AI Refactor Patch: encode route param to prevent injection and ensure valid URL with upgraded router
+                const response = await fetch(`https://fakestoreapi.com/products/category/${encodedCategory}`, { signal: controller.signal }) // AI Refactor Patch: pass abort signal to fetch for cancellation support
+                const date = await response.json()
+                console.log(date)
+                setCateGory(date)
+            } catch (err) {
+                if (err && err.name !== 'AbortError') {
+                    console.error(err)
+                }
+            }
         } 
         fetchCategories()
-     }, [])
-
+        return () => controller.abort() // AI Refactor Patch: abort in-flight request on cleanup
+     }, [category]) // AI Refactor Patch: include category in deps so effect reruns when param changes (React Router v7)
 
   return (
     <div>
@@ -35,10 +43,8 @@ const CategoryPage = () => {
             <div className="mt-4 flex justify-between">
               <div>
                 <h3 className="text-sm text-gray-700">
-                  <a href={item.id}>
-                    <span aria-hidden="true" className="absolute inset-0" />
-                    {item.titel}
-                  </a>
+                  <span aria-hidden="true" className="absolute inset-0" />
+                  <span>{item.titel}</span> {/* AI Refactor Patch: remove nested <a> to avoid invalid nested interactive elements and potential unsafe href usage */}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">{item.title}</p>
               </div>

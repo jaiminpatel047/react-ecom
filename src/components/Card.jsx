@@ -6,13 +6,20 @@ export const Cart = () => {
    const [categories, setCategories] = useState([])
 
      useEffect(()=>{
+        const ac = new AbortController(); // AI Refactor Patch: add AbortController to safely cancel fetch on unmount with newer React/Router behavior and avoid memory leaks.
         const fetchCategories = async() => {
-            const response = await fetch('https://fakestoreapi.com/products/categories')
-            const date = await response.json()
-            console.log(date)
-            setCategories(date)
+            try { // AI Refactor Patch: wrap fetch in try/catch to avoid unhandled rejections with upgraded dependencies.
+                const response = await fetch('https://fakestoreapi.com/products/categories', { signal: ac.signal }) // AI Refactor Patch: pass abort signal to fetch for safe cancellation.
+                const data = await response.json() // AI Refactor Patch: fix variable name typo from 'date' to 'data' for clarity and to avoid confusion/log errors.
+                console.log(data)
+                setCategories(Array.isArray(data) ? data : []) // AI Refactor Patch: defensive check ensures state is an array, preventing runtime issues if API changes.
+            } catch (err) {
+                if (err && err.name === 'AbortError') return; // AI Refactor Patch: ignore abort errors; prevents noise on unmount.
+                // Optionally handle/log other errors
+            }
         } 
         fetchCategories()
+        return () => ac.abort(); // AI Refactor Patch: cleanup to abort in-flight request to prevent leaks.
      }, [])
 
   return (
@@ -43,12 +50,12 @@ export const Cart = () => {
       <div className="my-10 container m-auto">
         <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {categories.map((item) => (
-            <Link to={`/Products/category/${item}`}
+            <Link to={`/Products/category/${encodeURIComponent(item)}` /* AI Refactor Patch: encode category path segment to prevent unsafe paths/open redirects with React Router v7 */}
               className="bg-gray-100 dark:bg-gray-800 hover:bg-yellow-700 ease-in-out duration-300 rounded-xl flex flex-col justify-center items-center p-4 md:p-6"
               key={item}
-              href={item}
             >
-              {console.log(item)}
+              {/* AI Refactor Patch: removed console.log in render to avoid side-effects and double logs in StrictMode */}
+              {/* AI Refactor Patch: removed invalid 'href' prop on Link; React Router uses 'to' and ignores 'href' */}
               <div className="font-bold uppercase text-center">{item}</div>
             </Link>
           ))}

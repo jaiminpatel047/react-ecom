@@ -6,13 +6,13 @@ const Header = () => {
   const [isChecked, setIsChecked] = useState(false);
 
   const toggleCheckbox = () => {
-    setIsChecked(!isChecked);
-
-    theme === "dark" ? setTheme("light") : setTheme("dark");
+    setIsChecked((prev) => !prev); // AI Refactor Patch: Use functional state update to avoid stale closures and ensure correctness under concurrent rendering.
+    setTheme((prev) => (prev === "dark" ? "light" : "dark")); // AI Refactor Patch: Derive next theme from previous state for consistency and to prevent race conditions.
     console.log("toggle");
   };
   useEffect(() => {
-    document.body.className = theme;
+    document.body.classList.remove("light", "dark"); // AI Refactor Patch: Avoid overwriting all body classes; remove only theme classes to preserve existing classes (safer and more compatible).
+    document.body.classList.add(theme); // AI Refactor Patch: Add the current theme class explicitly to avoid clobbering other classes.
   }, [theme]);
 
   return (
@@ -67,11 +67,11 @@ const Header = () => {
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
         </Link>
-        <label
+        <button
           className="swap swap-rotate mx-3"
-          type="checkbox"
-          checked={isChecked}
-          onClick={() => toggleCheckbox()}
+          type="button" // AI Refactor Patch: Use a button instead of a label with invalid checkbox props; avoids React warnings and improves accessibility.
+          aria-pressed={isChecked} // AI Refactor Patch: Provide accessible state for the toggle to align with modern accessibility expectations.
+          onClick={toggleCheckbox} // AI Refactor Patch: Use direct handler reference; no behavior change, avoids creating a new function each render.
         >
           {isChecked ? (
             <svg
@@ -90,7 +90,7 @@ const Header = () => {
               <path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
             </svg>
           )}
-        </label>
+        </button>
       </div>
     </header>
   );

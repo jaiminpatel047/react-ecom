@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"; // AI Refactor Patch: removed unused Link import to avoid potential build errors with stricter tooling in upgraded React Router v7
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loadrer from "../utiliy/Loadrer";
@@ -8,19 +8,35 @@ const ProductPage = () => {
     const { id } = useParams();
 
     const [product, setProduct] = useState({})
-    useEffect(()=>{
+    useEffect(() => {
+        if (!id) return; // AI Refactor Patch: guard against undefined params to prevent invalid fetch with upgraded router behaviors
+        const controller = new AbortController(); // AI Refactor Patch: use AbortController to avoid memory leaks on unmount per modern fetch best practices
         const fetchProduct = async () => {
-            const response = await fetch(`https://fakestoreapi.com/products/${id}`)
-            const date = await response.json()
-            setProduct(date)
+            try {
+                const response = await fetch(`https://fakestoreapi.com/products/${encodeURIComponent(id)}`, { signal: controller.signal }) // AI Refactor Patch: encode param and pass abort signal for safer requests
+                if (!response.ok) throw new Error(`HTTP ${response.status}`) // AI Refactor Patch: handle non-OK responses explicitly to avoid unhandled errors
+                const data = await response.json() // AI Refactor Patch: correct variable naming for clarity with added error handling
+                setProduct(data)
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    toast.error('Failed to load product') // AI Refactor Patch: surface fetch failures to users in a safe way
+                }
+            }
         }
         fetchProduct();
-    }, [])
+        return () => controller.abort() // AI Refactor Patch: cleanup fetch on unmount to prevent setting state on unmounted component
+    }, [id]) // AI Refactor Patch: include id in deps so route changes re-fetch in React Router v7
 
     const handleCart = (product) => {
       toast("added !");
       console.log(product)
-      const cart = JSON.parse(localStorage.getItem('cart')) || []
+      let cart = []; // AI Refactor Patch: initialize cart defensively to avoid crashes on malformed localStorage
+      try { // AI Refactor Patch: wrap JSON.parse to avoid app crash on invalid JSON in localStorage
+        const raw = localStorage.getItem('cart')
+        if (raw) cart = JSON.parse(raw)
+      } catch (e) {
+        cart = []
+      }
       const isProductExist =  cart.find(item => item.id === product.id)
       if(isProductExist){
         const upatedCart = cart.map(item => {
@@ -38,7 +54,8 @@ const ProductPage = () => {
       }
     }
 
-   if(!Object.keys(product).length > 0) return <Loadrer />
+   if (Object.keys(product).length === 0) return <Loadrer /> // AI Refactor Patch: fix incorrect negation precedence to correctly show loader when no product
+
   return (
     <section className="text-gray-400 body-font overflow-hidden">
     <div className="container px-5 py-24 mx-auto">
@@ -148,7 +165,7 @@ const ProductPage = () => {
                   className="w-5 h-5"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+                  <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 0 18 8v.5z" />
                 </svg>
               </a>
             </span>
